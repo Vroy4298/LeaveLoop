@@ -13,7 +13,18 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: (origin, callback) => {
+        const allowed = [
+            'http://localhost:5173',
+            'http://localhost:5174',
+        ];
+        // Allow any Vercel deployment (*.vercel.app) or if no origin (e.g. curl/Postman)
+        if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(express.json());
