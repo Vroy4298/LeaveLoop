@@ -11,7 +11,23 @@
   }
 
   body {
-    @apply font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 antialiased transition-colors duration-200;
+    @apply font-sans bg-slate-50 dark:bg-[#111827] text-slate-800 dark:text-slate-100 antialiased transition-colors duration-200;
+  }
+
+  /* Global dark mode table text — fixes all pages at once */
+  .dark table td {
+    color: rgb(209 213 219);
+    /* gray-300 */
+  }
+
+  .dark table th {
+    color: rgb(156 163 175);
+    /* gray-400 */
+  }
+
+  .dark table tr:hover td {
+    color: rgb(243 244 246);
+    /* gray-100 on hover */
   }
 
   ::-webkit-scrollbar {
