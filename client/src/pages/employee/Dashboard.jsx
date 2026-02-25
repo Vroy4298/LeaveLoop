@@ -10,8 +10,8 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
             <Icon size={22} className="text-white" />
         </div>
         <div>
-            <p className="text-sm text-slate-500 font-medium">{title}</p>
-            <p className="text-2xl font-bold text-slate-800">{value}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{title}</p>
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{value}</p>
         </div>
     </div>
 );
@@ -73,10 +73,10 @@ const EmployeeDashboard = () => {
                                     </thead>
                                     <tbody>
                                         {leaves.slice(0, 5).map(l => (
-                                            <tr key={l._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                <td className="py-3 px-2 font-medium text-slate-700">{l.leaveType}</td>
-                                                <td className="py-3 px-2 text-slate-500">{new Date(l.fromDate).toLocaleDateString()}</td>
-                                                <td className="py-3 px-2 text-slate-500">{new Date(l.toDate).toLocaleDateString()}</td>
+                                            <tr key={l._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                                <td className="py-3 px-2 font-medium text-slate-700 dark:text-slate-200">{l.leaveType}</td>
+                                                <td className="py-3 px-2 text-slate-500 dark:text-slate-400">{new Date(l.fromDate).toLocaleDateString()}</td>
+                                                <td className="py-3 px-2 text-slate-500 dark:text-slate-400">{new Date(l.toDate).toLocaleDateString()}</td>
                                                 <td className="py-3 px-2"><StatusBadge status={l.status} /></td>
                                             </tr>
                                         ))}
@@ -103,9 +103,9 @@ const EmployeeDashboard = () => {
                                     </thead>
                                     <tbody>
                                         {reimbursements.slice(0, 5).map(r => (
-                                            <tr key={r._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                <td className="py-3 px-2 font-medium text-slate-700">{r.title}</td>
-                                                <td className="py-3 px-2 text-slate-500">₹{r.amount.toLocaleString()}</td>
+                                            <tr key={r._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                                <td className="py-3 px-2 font-medium text-slate-700 dark:text-slate-200">{r.title}</td>
+                                                <td className="py-3 px-2 text-slate-500 dark:text-slate-400">₹{r.amount.toLocaleString()}</td>
                                                 <td className="py-3 px-2"><StatusBadge status={r.status} /></td>
                                             </tr>
                                         ))}

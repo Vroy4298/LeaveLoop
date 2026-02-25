@@ -99,13 +99,13 @@ const UserManagement = () => {
                             </thead>
                             <tbody>
                                 {users.map(u => (
-                                    <tr key={u._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <tr key={u._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                         <td className="py-3 px-3">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center flex-shrink-0">
                                                     <span className="text-white text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>
                                                 </div>
-                                                <span className="font-medium text-slate-800">{u.name}</span>
+                                                <span className="font-medium text-slate-800 dark:text-slate-100">{u.name}</span>
                                             </div>
                                         </td>
                                         <td className="py-3 px-3 text-slate-500">{u.email}</td>
@@ -141,9 +141,9 @@ const UserManagement = () => {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                            <h3 className="font-semibold text-slate-800">{editUser ? 'Edit User' : 'Create New User'}</h3>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+                            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{editUser ? 'Edit User' : 'Create New User'}</h3>
                             <button onClick={closeModal} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
                                 <X size={18} />
                             </button>

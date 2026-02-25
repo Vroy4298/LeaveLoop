@@ -3,7 +3,7 @@ import Navbar from '../common/Navbar';
 
 const DashboardLayout = ({ children, title = 'Dashboard' }) => {
     return (
-        <div className="flex min-h-screen bg-slate-50">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
             <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Navbar title={title} />

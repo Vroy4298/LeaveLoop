@@ -43,9 +43,9 @@ const Profile = () => {
                         }
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800">{user?.name}</h2>
-                        <p className="text-slate-500 text-sm capitalize">{user?.role} · {user?.department || 'No department'}</p>
-                        <p className="text-slate-400 text-sm">{user?.email}</p>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{user?.name}</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm capitalize">{user?.role} · {user?.department || 'No department'}</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-sm">{user?.email}</p>
                     </div>
                 </div>
 
@@ -93,7 +93,7 @@ const Profile = () => {
                             <div className="relative">
                                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input type="email" value={user?.email} readOnly
-                                    className="input pl-10 bg-slate-50 cursor-not-allowed text-slate-400" />
+                                    className="input pl-10 bg-slate-50 dark:bg-slate-600 cursor-not-allowed text-slate-400 dark:text-slate-500" />
                             </div>
                         </div>
 
