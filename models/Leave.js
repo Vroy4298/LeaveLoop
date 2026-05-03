@@ -47,6 +47,13 @@ const leaveSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        // AI-generated summary cache — populated by /api/ai/summarize/:id
+        aiSummary: {
+            text:        { type: String, default: '' },
+            urgency:     { type: String, enum: ['High', 'Medium', 'Low', ''], default: '' },
+            score:       { type: Number, default: 0 },
+            generatedAt: { type: Date,   default: null },
+        },
     },
     { timestamps: true }
 );

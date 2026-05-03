@@ -67,32 +67,41 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Please provide email and password' });
+    try {
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: 'Please provide email and password' });
+        }
+
+        // Explicitly select password since it's excluded by default
+        const user = await User.findOne({ email }).select('+password');
+
+        if (!user || !(await user.matchPassword(password))) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        const token = generateToken(user._id);
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                department: user.department,
+                designation: user.designation,
+                profilePhoto: user.profilePhoto,
+            },
+        });
+    } catch (error) {
+        console.error('LOGIN ERROR:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Server Error during login',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        });
     }
-
-    // Explicitly select password since it's excluded by default
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user || !(await user.matchPassword(password))) {
-        return res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    const token = generateToken(user._id);
-
-    res.json({
-        success: true,
-        token,
-        user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            department: user.department,
-            designation: user.designation,
-            profilePhoto: user.profilePhoto,
-        },
-    });
 };
 
 // @desc    Get current logged-in user
