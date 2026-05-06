@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import StatusBadge from '../../components/common/StatusBadge';
 import API from '../../api/axios';
@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import {
     CheckSquare, X, Check, AlertCircle, Sparkles, Brain,
     BarChart3, Clock, User, Calendar, ChevronDown, ChevronUp, Zap,
+    Search, Filter,
 } from 'lucide-react';
 
 // ─── Urgency helpers ─────────────────────────────────────────────────────────
@@ -313,6 +314,8 @@ const LeaveApproval = () => {
     const [leaves, setLeaves]           = useState([]);
     const [loading, setLoading]         = useState(true);
     const [filter, setFilter]           = useState('Pending');
+    const [search, setSearch]           = useState('');
+    const [deptFilter, setDeptFilter]   = useState('All');
     const [rejectTarget, setRejectTarget] = useState(null);
     const [rankModal, setRankModal]     = useState(null);   // null | ranked[]
     const [rankLoading, setRankLoading] = useState(false);
@@ -352,7 +355,22 @@ const LeaveApproval = () => {
         }
     };
 
-    const filtered = leaves.filter(l => filter === 'All' || l.status === filter);
+    const filtered = useMemo(() => {
+        return leaves.filter(l => {
+            const matchStatus = filter === 'All' || l.status === filter;
+            const matchSearch = !search.trim() ||
+                l.user?.name?.toLowerCase().includes(search.toLowerCase());
+            const matchDept   = deptFilter === 'All' ||
+                (l.user?.department || '') === deptFilter;
+            return matchStatus && matchSearch && matchDept;
+        });
+    }, [leaves, filter, search, deptFilter]);
+
+    const departments = useMemo(() => {
+        const depts = [...new Set(leaves.map(l => l.user?.department).filter(Boolean))];
+        return ['All', ...depts.sort()];
+    }, [leaves]);
+
     const pendingCount = leaves.filter(l => l.status === 'Pending').length;
 
     return (
@@ -421,6 +439,32 @@ const LeaveApproval = () => {
                                 </button>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                {/* ── Search & Department Filter ── */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-5">
+                    <div className="relative flex-1">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by employee name…"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 dark:text-slate-200 transition-all"
+                        />
+                    </div>
+                    <div className="relative">
+                        <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <select
+                            value={deptFilter}
+                            onChange={e => setDeptFilter(e.target.value)}
+                            className="pl-9 pr-8 py-2 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 dark:text-slate-200 appearance-none cursor-pointer transition-all"
+                        >
+                            {departments.map(d => (
+                                <option key={d} value={d}>{d === 'All' ? 'All Departments' : d}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 

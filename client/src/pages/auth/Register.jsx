@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, Zap, ArrowRight, Mail, Lock, User, Briefcase } from 'lucide-react';
+import { Eye, EyeOff, Zap, ArrowRight, Mail, Lock, User, Info } from 'lucide-react';
 
 const shimmerStyle = `
   .ll-shimmer {
@@ -36,24 +36,30 @@ const Field = ({ label, icon: Icon, children }) => (
 );
 
 const inputClass = "w-full bg-white/5 border border-white/10 text-white placeholder-slate-600 text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all";
+const inputClassPr = "w-full bg-white/5 border border-white/10 text-white placeholder-slate-600 text-sm rounded-xl pl-10 pr-10 py-3 outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all";
 
 const Register = () => {
     const { register } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState({ name: '', email: '', password: '', department: '', designation: '', role: 'employee' });
+    const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
     const [showPass, setShowPass] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
     const handleSubmit = async e => {
         e.preventDefault();
+        if (form.password !== form.confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
         setLoading(true);
         try {
-            const user = await register(form);
+            // Only send name, email, password — backend forces role: 'employee'
+            const user = await register({ name: form.name, email: form.email, password: form.password });
             toast.success(`Welcome to LeaveLoop, ${user.name}! 🎉`);
-            const redirect = { admin: '/admin', manager: '/manager', employee: '/employee' };
-            navigate(redirect[user.role] || '/employee');
+            navigate('/employee');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Registration failed');
         } finally {
@@ -85,6 +91,14 @@ const Register = () => {
 
                 {/* form card */}
                 <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl">
+                    {/* Role notice */}
+                    <div className="flex items-start gap-2.5 mb-5 px-3 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                        <Info size={14} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-300 leading-relaxed">
+                            All new accounts start as <strong>Employee</strong>. Your department and designation will be assigned by your admin after account creation.
+                        </p>
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-4">
 
                         <Field label="Full Name" icon={User}>
@@ -100,39 +114,22 @@ const Register = () => {
                         <Field label="Password" icon={Lock}>
                             <input type={showPass ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} required
                                 placeholder="Min 6 characters" minLength={6}
-                                className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-600 text-sm rounded-xl pl-10 pr-10 py-3 outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all" />
+                                className={inputClassPr} />
                             <button type="button" onClick={() => setShowPass(!showPass)}
                                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
                                 {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                             </button>
                         </Field>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Department</label>
-                                <div className="relative">
-                                    <Briefcase size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                                    <input type="text" name="department" value={form.department} onChange={handleChange}
-                                        placeholder="Engineering" className={inputClass} />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Designation</label>
-                                <input type="text" name="designation" value={form.designation} onChange={handleChange}
-                                    placeholder="Developer"
-                                    className="w-full bg-white/5 border border-white/10 text-white placeholder-slate-600 text-sm rounded-xl px-4 py-3 outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Role</label>
-                            <select name="role" value={form.role} onChange={handleChange}
-                                className="w-full bg-[#0f0f1e] border border-white/10 text-slate-300 text-sm rounded-xl px-4 py-3 outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all">
-                                <option value="employee">Employee</option>
-                                <option value="manager">Manager</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
+                        <Field label="Confirm Password" icon={Lock}>
+                            <input type={showConfirm ? 'text' : 'password'} name="confirmPassword" value={form.confirmPassword} onChange={handleChange} required
+                                placeholder="Re-enter password"
+                                className={inputClassPr} />
+                            <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                                {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+                            </button>
+                        </Field>
 
                         <button type="submit" disabled={loading}
                             className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-violet-600/30 disabled:opacity-60 disabled:cursor-not-allowed mt-2">

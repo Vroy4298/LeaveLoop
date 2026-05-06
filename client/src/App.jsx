@@ -49,14 +49,17 @@ function App() {
             <Route path="/employee/submit-reimbursement" element={<ProtectedRoute roles={['employee']}><SubmitReimbursement /></ProtectedRoute>} />
             <Route path="/employee/reimbursement-history" element={<ProtectedRoute roles={['employee']}><ReimbursementHistory /></ProtectedRoute>} />
 
-            {/* Manager */}
-            <Route path="/manager" element={<ProtectedRoute roles={['manager']}><ManagerDashboard /></ProtectedRoute>} />
-            <Route path="/manager/leave-approval" element={<ProtectedRoute roles={['manager']}><LeaveApproval /></ProtectedRoute>} />
-            <Route path="/manager/reimbursement-approval" element={<ProtectedRoute roles={['manager']}><ReimbursementApproval /></ProtectedRoute>} />
-            <Route path="/manager/employees" element={<ProtectedRoute roles={['manager']}><EmployeeList /></ProtectedRoute>} />
+            {/* Manager — admin also gets full access to all manager views */}
+            <Route path="/manager" element={<ProtectedRoute roles={['manager', 'admin']}><ManagerDashboard /></ProtectedRoute>} />
+            <Route path="/manager/profile" element={<ProtectedRoute roles={['manager', 'admin']}><Profile /></ProtectedRoute>} />
+            <Route path="/manager/apply-leave" element={<ProtectedRoute roles={['manager', 'admin']}><ApplyLeave /></ProtectedRoute>} />
+            <Route path="/manager/leave-approval" element={<ProtectedRoute roles={['manager', 'admin']}><LeaveApproval /></ProtectedRoute>} />
+            <Route path="/manager/reimbursement-approval" element={<ProtectedRoute roles={['manager', 'admin']}><ReimbursementApproval /></ProtectedRoute>} />
+            <Route path="/manager/employees" element={<ProtectedRoute roles={['manager', 'admin']}><EmployeeList /></ProtectedRoute>} />
 
             {/* Admin */}
             <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/profile" element={<ProtectedRoute roles={['admin']}><Profile /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><UserManagement /></ProtectedRoute>} />
 
             {/* 404 fallback */}

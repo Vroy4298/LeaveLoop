@@ -9,12 +9,12 @@ const RejectModal = ({ onConfirm, onCancel }) => {
     const [reason, setReason] = useState('');
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-100 dark:border-slate-700">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                     <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center">
                         <AlertCircle size={18} className="text-red-500" />
                     </div>
-                    <h3 className="font-semibold text-slate-800">Reason for Rejection</h3>
+                    <h3 className="font-semibold text-slate-800 dark:text-slate-100">Reason for Rejection</h3>
                 </div>
                 <div className="px-6 py-5 space-y-4">
                     <textarea
@@ -90,10 +90,10 @@ const ReimbursementApproval = () => {
                             )}
                         </div>
                     </div>
-                    <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
                         {['All', 'Pending', 'Approved', 'Rejected'].map(f => (
                             <button key={f} onClick={() => setFilter(f)}
-                                className={`text-xs font-medium px-3 py-1.5 rounded-md transition-all ${filter === f ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+                                className={`text-xs font-medium px-3 py-1.5 rounded-md transition-all ${filter === f ? 'bg-white dark:bg-slate-800 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>
                                 {f}
                             </button>
                         ))}
@@ -110,27 +110,27 @@ const ReimbursementApproval = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-slate-100">
+                                <tr className="border-b border-slate-100 dark:border-slate-700">
                                     {['Employee', 'Title', 'Amount', 'Description', 'Date', 'Status', 'Rejection Reason', 'Actions'].map(h => (
-                                        <th key={h} className="text-left py-3 px-3 text-slate-500 font-medium">{h}</th>
+                                        <th key={h} className="text-left py-3 px-3 text-slate-500 dark:text-slate-400 font-medium">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {filtered.map(r => (
-                                    <tr key={r._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <tr key={r._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                         <td className="py-3 px-3">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-xs font-semibold text-violet-600 flex-shrink-0">
                                                     {r.user?.name?.[0]?.toUpperCase()}
                                                 </div>
-                                                <span className="font-medium text-slate-700 whitespace-nowrap">{r.user?.name}</span>
+                                                <span className="font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">{r.user?.name}</span>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-3 text-slate-600">{r.title}</td>
-                                        <td className="py-3 px-3 font-semibold text-slate-800">₹{r.amount.toLocaleString()}</td>
-                                        <td className="py-3 px-3 text-slate-500 max-w-[130px] truncate">{r.description}</td>
-                                        <td className="py-3 px-3 text-slate-400 text-xs whitespace-nowrap">{new Date(r.createdAt).toLocaleDateString()}</td>
+                                        <td className="py-3 px-3 text-slate-600 dark:text-slate-300">{r.title}</td>
+                                        <td className="py-3 px-3 font-semibold text-slate-800 dark:text-slate-100">₹{r.amount.toLocaleString()}</td>
+                                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400 max-w-[130px] truncate">{r.description}</td>
+                                        <td className="py-3 px-3 text-slate-400 dark:text-slate-500 text-xs whitespace-nowrap">{new Date(r.createdAt).toLocaleDateString()}</td>
                                         <td className="py-3 px-3"><StatusBadge status={r.status} /></td>
                                         <td className="py-3 px-3 max-w-[160px]">
                                             {r.status === 'Rejected' && r.rejectionReason ? (

@@ -6,15 +6,18 @@ const Reimbursement = require('../models/Reimbursement');
 const submitReimbursement = async (req, res) => {
     const { title, amount, description } = req.body;
 
-    const reimbursement = await Reimbursement.create({
-        user: req.user._id,
-        title,
-        amount,
-        description,
-        receipt: req.file ? req.file.path : '',
-    });
-
-    res.status(201).json({ success: true, reimbursement });
+    try {
+        const reimbursement = await Reimbursement.create({
+            user: req.user._id,
+            title,
+            amount,
+            description,
+            receipt: req.file ? req.file.path : '',
+        });
+        res.status(201).json({ success: true, reimbursement });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
 };
 
 // @desc    Get my reimbursements (Employee)
@@ -47,6 +50,12 @@ const getReimbursementById = async (req, res) => {
     if (!reimbursement) {
         return res.status(404).json({ success: false, message: 'Reimbursement not found' });
     }
+
+    // Ownership check: employees can only view their own reimbursements
+    if (req.user.role === 'employee' && reimbursement.user._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'Not authorized to view this reimbursement' });
+    }
+
     res.json({ success: true, reimbursement });
 };
 

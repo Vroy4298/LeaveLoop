@@ -16,6 +16,8 @@ const employeeLinks = [
 
 const managerLinks = [
     { to: '/manager', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/manager/profile', label: 'My Profile', icon: User },
+    { to: '/manager/apply-leave', label: 'Apply Leave', icon: CalendarDays },
     { to: '/manager/leave-approval', label: 'Leave Approvals', icon: CheckSquare },
     { to: '/manager/reimbursement-approval', label: 'Expense Approvals', icon: Receipt },
     { to: '/manager/employees', label: 'Employees', icon: Users },
@@ -23,7 +25,12 @@ const managerLinks = [
 
 const adminLinks = [
     { to: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/admin/profile', label: 'My Profile', icon: User },
     { to: '/admin/users', label: 'User Management', icon: Users },
+    // Admin can also access all manager pages
+    { to: '/manager/leave-approval', label: 'Leave Approvals', icon: CheckSquare },
+    { to: '/manager/reimbursement-approval', label: 'Expense Approvals', icon: Receipt },
+    { to: '/manager/employees', label: 'Employee List', icon: Building2 },
 ];
 
 const roleLinks = { employee: employeeLinks, manager: managerLinks, admin: adminLinks };

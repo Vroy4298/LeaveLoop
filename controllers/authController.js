@@ -13,7 +13,7 @@ const generateToken = (id) => {
 // @access  Public
 const register = async (req, res) => {
     console.log('Registration attempt received:', req.body);
-    const { name, email, password, role, department, designation } = req.body;
+    const { name, email, password } = req.body;
 
     try {
         console.log('Checking if user exists with email:', email);
@@ -30,9 +30,9 @@ const register = async (req, res) => {
             name,
             email,
             password,
-            role: role || 'employee',
-            department,
-            designation,
+            role: 'employee',   // always forced — role is assigned by admin only
+            department: '',
+            designation: '',
         });
         console.log('User created successfully. ID:', user._id);
 

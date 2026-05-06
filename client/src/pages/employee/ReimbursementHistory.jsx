@@ -34,9 +34,9 @@ const ReimbursementHistory = () => {
             <div className="space-y-4">
                 {/* Summary Chips */}
                 <div className="flex flex-wrap gap-3">
-                    <div className="bg-white border border-slate-100 rounded-xl px-4 py-2 text-sm shadow-sm">
-                        <span className="text-slate-500">Total Claimed: </span>
-                        <span className="font-bold text-slate-800">₹{total.toLocaleString()}</span>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl px-4 py-2 text-sm shadow-sm">
+                        <span className="text-slate-500 dark:text-slate-400">Total Claimed: </span>
+                        <span className="font-bold text-slate-800 dark:text-slate-100">₹{total.toLocaleString()}</span>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2 text-sm shadow-sm">
                         <span className="text-emerald-700">Approved: </span>
@@ -65,19 +65,19 @@ const ReimbursementHistory = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b border-slate-100">
+                                    <tr className="border-b border-slate-100 dark:border-slate-700">
                                         {['Title', 'Amount', 'Description', 'Date', 'Status', 'Rejection Reason', 'Action'].map(h => (
-                                            <th key={h} className="text-left py-3 px-3 text-slate-500 font-medium">{h}</th>
+                                            <th key={h} className="text-left py-3 px-3 text-slate-500 dark:text-slate-400 font-medium">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {items.map(r => (
-                                        <tr key={r._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                            <td className="py-3 px-3 font-medium text-slate-700">{r.title}</td>
-                                            <td className="py-3 px-3 text-slate-700 font-semibold">₹{r.amount.toLocaleString()}</td>
-                                            <td className="py-3 px-3 text-slate-500 max-w-[180px] truncate">{r.description}</td>
-                                            <td className="py-3 px-3 text-slate-400 text-xs">{new Date(r.createdAt).toLocaleDateString()}</td>
+                                        <tr key={r._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <td className="py-3 px-3 font-medium text-slate-700 dark:text-slate-200">{r.title}</td>
+                                            <td className="py-3 px-3 text-slate-700 dark:text-slate-200 font-semibold">₹{r.amount.toLocaleString()}</td>
+                                            <td className="py-3 px-3 text-slate-500 dark:text-slate-400 max-w-[180px] truncate">{r.description}</td>
+                                            <td className="py-3 px-3 text-slate-400 dark:text-slate-500 text-xs">{new Date(r.createdAt).toLocaleDateString()}</td>
                                             <td className="py-3 px-3"><StatusBadge status={r.status} /></td>
                                             <td className="py-3 px-3 max-w-[180px]">
                                                 {r.status === 'Rejected' ? (

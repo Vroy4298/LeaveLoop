@@ -36,6 +36,7 @@ app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/reimbursements', require('./routes/reimbursementRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/ai',    require('./routes/aiRoutes'));      // AI leave summarization
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Health check
 app.get('/', (req, res) => {

@@ -1,0 +1,681 @@
+# 🎯 LeaveLoop — Complete Interview Preparation Guide
+
+---
+
+## 🗣️ HOW TO INTRODUCE THIS PROJECT TO AN INTERVIEWER
+
+> **Read this script out loud. Practice it 3 times until it feels natural.**
+
+---
+
+**"I built a full-stack HR Management System called LeaveLoop. The core problem it solves is giving organizations a digital, role-based platform to manage employee leave applications and expense reimbursements — without paper forms or email chains.**
+
+**On the backend, I built a RESTful API using Node.js and Express, with MongoDB as the database accessed through Mongoose. I implemented JWT-based authentication and a Role-Based Access Control system with three distinct roles — Admin, Manager, and Employee — each having different levels of access and UI.**
+
+**On the frontend, I used React 18 with Vite as the build tool, React Router v7 for navigation, and Tailwind CSS for responsive styling. I also integrated Cloudinary for uploading profile photos and reimbursement receipts, and deployed the backend on Render and the frontend on Vercel.**
+
+**The system supports the complete workflow: an employee applies for leave or submits a reimbursement, a manager reviews and approves or rejects it with notes, and an admin can manage all users in the system. I also built a dark/light theme toggle, protected route guards on the frontend, and a central error handler on the backend.**
+
+**This project taught me how authentication flows work end-to-end, how to design RBAC systems, how to handle CORS in a real deployment scenario, and how to structure a production-ready MERN application."**
+
+---
+
+## 📦 TECH STACK QUICK REFERENCE
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Runtime | Node.js | JavaScript on the server |
+| Framework | Express.js | HTTP server & routing |
+| Database | MongoDB + Mongoose | NoSQL DB + ODM |
+| Auth | JWT + bcryptjs | Token-based auth + password hashing |
+| File Upload | Multer (+ Cloudinary) | Handle multipart form data |
+| Frontend | React 18 + Vite | UI + fast dev build tool |
+| Routing | React Router v7 | Client-side routing |
+| Styling | Tailwind CSS | Utility-first CSS |
+| HTTP Client | Axios | Frontend API calls |
+| Notifications | react-hot-toast | Toast notifications |
+| Icons | lucide-react | Icon library |
+| Deployment | Render (BE) + Vercel (FE) | Hosting |
+
+---
+
+---
+
+# 📋 SECTION 1: PROJECT OVERVIEW QUESTIONS
+
+---
+
+**Q1. What is LeaveLoop? Can you give a brief overview?**
+
+**Answer:**
+LeaveLoop is a full-stack HR Management System that allows organizations to manage employee leave requests and expense reimbursements digitally. It has three user roles: Employee, Manager, and Admin. Employees apply for leave or submit reimbursements, managers approve or reject them, and admins manage all users. It is a MERN stack application — MongoDB, Express, React, Node.js — with JWT authentication and role-based access control.
+
+**Why:** Because existing HR tools are either expensive or too complex for small teams. Building it from scratch helped me understand the full lifecycle of a web application.
+
+---
+
+**Q2. What features did you build?**
+
+**Answer:**
+- **Authentication:** Register, Login, JWT token generation, profile update
+- **Leave Management:** Apply for leave (6 types), view own leaves, manager approves/rejects with notes, delete a pending leave
+- **Reimbursement Management:** Submit expense with receipt upload, manager approves/rejects, delete if still pending
+- **Role-Based Dashboards:** Three separate dashboards — Employee, Manager, Admin
+- **Admin Panel:** View and manage all users in the system
+- **Profile Management:** Update name, photo (via Cloudinary), department, designation
+- **Theme Toggle:** Dark/Light mode persisted via ThemeContext
+- **Protected Routes:** Frontend route guards based on user role
+
+---
+
+**Q3. What challenges did you face and how did you solve them?**
+
+**Answer:**
+1. **CORS Issues in Deployment:** When the backend (Render) and frontend (Vercel) are on different domains, browsers block cross-origin requests. I solved this by writing a dynamic CORS origin check that whitelists localhost ports and any `*.vercel.app` domain using a regex.
+2. **Password Security:** Raw passwords cannot be stored. I used bcryptjs with a salt factor of 10 to hash passwords before saving.
+3. **File Uploads:** Handling binary file data in a REST API requires multipart parsing. I used Multer to parse files; later integrated Cloudinary for cloud-hosted storage.
+4. **Role-Based Route Protection:** Both on the backend (middleware) and frontend (ProtectedRoute component) I needed to restrict access. I built two middleware layers and a React wrapper component.
+
+---
+
+---
+
+# 🏗️ SECTION 2: ARCHITECTURE & DESIGN
+
+---
+
+**Q4. Explain your project folder structure.**
+
+**Answer:**
+```
+Employee-Leave/         ← Root (Backend)
+├── config/db.js        ← MongoDB connection
+├── controllers/        ← Business logic (auth, leave, reimbursement, user)
+├── middleware/         ← protect (JWT check), authorize (RBAC)
+├── models/             ← Mongoose schemas (User, Leave, Reimbursement)
+├── routes/             ← Express route definitions
+├── server.js           ← Entry point, middleware setup, route mounting
+└── client/             ← Frontend (React + Vite)
+    └── src/
+        ├── api/        ← Axios instance config
+        ├── components/ ← Reusable components (ProtectedRoute, Sidebar, etc.)
+        ├── context/    ← AuthContext, ThemeContext
+        ├── pages/      ← employee/, manager/, admin/, auth/, Landing
+        └── App.jsx     ← Route definitions
+```
+
+**Why this structure:** Separation of Concerns — each folder has one job. Controllers handle logic, routes handle URL mapping, models handle data shape, middleware handles cross-cutting concerns.
+
+---
+
+**Q5. What design pattern does your backend follow?**
+
+**Answer:**
+The backend follows the **MVC (Model-View-Controller)** pattern:
+- **Model:** Mongoose schemas (User.js, Leave.js, Reimbursement.js) define data structure
+- **Controller:** Controllers contain the business logic (what happens when a route is hit)
+- **View:** There is no traditional view layer — this is a REST API, so the "view" is the JSON response consumed by the React frontend
+
+**Why:** MVC separates data, logic, and output concerns, making the codebase maintainable and scalable.
+
+---
+
+**Q6. How did you connect to MongoDB?**
+
+**Answer:**
+In [config/db.js](file:///e:/Employee-Leave/config/db.js), I use Mongoose's `connect()` method with the MongoDB URI from the [.env](file:///e:/Employee-Leave/.env) file. The connection function is called once at server startup in [server.js](file:///e:/Employee-Leave/server.js) before routes are mounted.
+
+**What happens when used:** Mongoose establishes a persistent connection pool to MongoDB Atlas. All subsequent `Model.find()`, `Model.create()` etc. reuse this connection rather than opening a new one per query — this is efficient and critical for performance.
+
+---
+
+---
+
+# 🔐 SECTION 3: AUTHENTICATION & JWT
+
+---
+
+**Q7. How does login and registration work in this project?**
+
+**Answer:**
+**Registration (`POST /api/auth/register`):**
+1. Check if user with email already exists
+2. If not, create the user — the password is automatically hashed by a Mongoose `pre('save')` hook using bcryptjs
+3. Generate a JWT token
+4. Return token + user data (excluding password)
+
+**Login (`POST /api/auth/login`):**
+1. Find user by email, explicitly selecting the password field (it's excluded by default via `select: false`)
+2. Compare entered password with hashed password using `bcrypt.compare()`
+3. If match, generate and return JWT token
+
+---
+
+**Q8. What is JWT and why did you use it instead of sessions?**
+
+**Answer:**
+**JWT (JSON Web Token)** is a self-contained, digitally signed token that encodes user identity. It has three parts: Header (algorithm), Payload (user id, expiry), and Signature.
+
+**Why JWT over sessions:**
+- **Stateless:** The server doesn't store session data. The token itself carries all information, making it perfect for REST APIs
+- **Scalable:** Works across multiple servers without a shared session store
+- **Frontend-friendly:** The React SPA stores the token in localStorage and attaches it to every request via the `Authorization: Bearer <token>` header
+
+**What happens when used:** The server signs the token with `JWT_SECRET`. On every protected request, the [protect](file:///e:/Employee-Leave/middleware/authMiddleware.js#4-35) middleware verifies this signature. If tampered with, verification fails and a 401 is returned.
+
+---
+
+**Q9. Walk me through your [protect](file:///e:/Employee-Leave/middleware/authMiddleware.js#4-35) middleware.**
+
+**Answer:**
+```js
+// authMiddleware.js
+const protect = async (req, res, next) => {
+    let token;
+    if (req.headers.authorization?.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1]; // Extract token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify signature
+        req.user = await User.findById(decoded.id).select('-password'); // Attach user
+        next(); // Pass to controller
+    }
+    if (!token) return res.status(401).json({ message: 'Not authorized, no token' });
+};
+```
+
+**What happens when used:** Every subsequent request to a protected route first passes through this middleware. If the token is valid, `req.user` gets populated with the user object and the controller can access it. If invalid or missing, a `401 Unauthorized` is returned immediately.
+
+---
+
+**Q10. How did you handle password hashing?**
+
+**Answer:**
+I used **bcryptjs** in a Mongoose `pre('save')` hook:
+
+```js
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return; // Avoid re-hashing on profile updates
+    const salt = await bcrypt.genSalt(10); // Generate salt with cost factor 10
+    this.password = await bcrypt.hash(this.password, salt); // Hash the password
+});
+```
+
+**Why bcryptjs:** It is specifically designed for password hashing. Unlike MD5/SHA, bcrypt is intentionally slow (due to the salt rounds/cost factor), making brute-force attacks computationally expensive.
+
+**Why `isModified` check:** Without it, every time any field is updated (like profile photo), the already-hashed password would be hashed again, corrupting it.
+
+**What happens with salt factor 10:** bcrypt runs the hashing algorithm 2^10 = 1024 times, making cracking significantly harder.
+
+---
+
+**Q11. What is `select: false` on the password field?**
+
+**Answer:**
+In the User schema, the password field has `select: false`. This means Mongoose **never** includes the password field in query results by default.
+
+**Why:** Security-by-default. If you forget to exclude the password in a response, it's still not sent. You must explicitly opt-in: `User.findOne({ email }).select('+password')` — which is done only in the login controller where it's actually needed.
+
+---
+
+---
+
+# 🛡️ SECTION 4: ROLE-BASED ACCESS CONTROL (RBAC)
+
+---
+
+**Q12. How did you implement RBAC (Role-Based Access Control)?**
+
+**Answer:**
+I built two middleware layers:
+
+**Backend — [authorize()](file:///e:/Employee-Leave/middleware/roleMiddleware.js#1-16) middleware:**
+```js
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ message: `Access denied.` });
+        }
+        next();
+    };
+};
+```
+Used as: `router.get('/', protect, authorize('manager', 'admin'), getAllLeaves)`
+
+**Frontend — `ProtectedRoute` component:**
+A React component that wraps routes, checks AuthContext for the logged-in user's role, and redirects to `/login` if the role doesn't match.
+
+**Why two layers:** The backend check is the real security gate. The frontend check is a UX improvement to avoid showing unauthorized pages momentarily before an API call fails.
+
+---
+
+**Q13. What are the three roles and what can each do?**
+
+**Answer:**
+
+| Role | Can Do |
+|------|--------|
+| **Employee** | Apply leave, view own leaves, submit reimbursement, view own reimbursements, update profile, delete pending requests |
+| **Manager** | All of employee view + approve/reject all leaves & reimbursements + view employee list |
+| **Admin** | Access admin dashboard + manage/view all users |
+
+---
+
+**Q14. What happens if an employee tries to access the manager route?**
+
+**Answer:**
+- **Frontend:** The `ProtectedRoute` component sees that `user.role === 'employee'` doesn't match the required `['manager']` roles prop, and immediately redirects to `/login` (or an unauthorized page)
+- **Backend (if they bypass the frontend):** The [authorize('manager', 'admin')](file:///e:/Employee-Leave/middleware/roleMiddleware.js#1-16) middleware returns a `403 Forbidden` JSON response, so no data is ever sent
+
+---
+
+---
+
+# 🗄️ SECTION 5: MONGODB & MONGOOSE
+
+---
+
+**Q15. Why did you choose MongoDB over a relational database like MySQL?**
+
+**Answer:**
+- **Schema flexibility:** Employee data, leave types, reimbursement fields can vary. MongoDB's document model accommodates this without rigid schema migrations
+- **JSON-native:** MongoDB stores BSON (Binary JSON), making it a natural fit for a Node.js/JavaScript stack
+- **Mongoose ODM:** Provides schema validation, middleware hooks (`pre`, `post`), and type casting on top of MongoDB's flexibility
+
+**Tradeoff to acknowledge:** For complex relational queries (multi-table JOINs), a SQL database like PostgreSQL would be more efficient. But for this application's use case, MongoDB with `populate()` is sufficient.
+
+---
+
+**Q16. Explain Mongoose `populate()` and when you used it.**
+
+**Answer:**
+`populate()` replaces a stored ObjectId reference with the actual document from the referenced collection — similar to a JOIN in SQL.
+
+**Example from [leaveController.js](file:///e:/Employee-Leave/controllers/leaveController.js):**
+```js
+await Leave.find()
+    .populate('user', 'name email department designation profilePhoto')
+    .populate('reviewedBy', 'name')
+```
+
+- `user` field in Leave stores just the User's ObjectId
+- `populate('user', 'name email...')` replaces that ObjectId with the actual User document (only selected fields)
+
+**Why:** The Manager's leave approval page needs to show the employee's name, email, and department alongside each leave request. Without `populate`, the frontend would receive just an ObjectId like `507f1f77bcf86cd799439011`, which is useless to display.
+
+**What happens when used:** Mongoose internally performs two queries — first to get the leaves, then a second query to fetch matching users. The results are merged in memory before sending.
+
+---
+
+**Q17. What are Mongoose `timestamps`?**
+
+**Answer:**
+When `{ timestamps: true }` is added to a schema, Mongoose automatically adds `createdAt` and `updatedAt` fields to every document, updated automatically.
+
+**Why:** Instead of manually setting `createdAt: Date.now()` in every controller, timestamps handle it automatically and consistently. Used in all three models (User, Leave, Reimbursement). The leave history page sorts by `createdAt: -1` to show newest first.
+
+---
+
+**Q18. Explain the Mongoose schema `enum` validator.**
+
+**Answer:**
+`enum` restricts a field to a predefined set of values. Used in:
+- `User.role`: `['admin', 'manager', 'employee']`
+- `Leave.leaveType`: `['Annual', 'Sick', 'Casual', 'Maternity', 'Paternity', 'Unpaid']`
+- `Leave.status` and `Reimbursement.status`: `['Pending', 'Approved', 'Rejected']`
+
+**Why:** Data integrity at the database level. If someone sends `leaveType: 'Holiday'`, Mongoose throws a validation error before the document is saved.
+
+**What happens when violated:** Mongoose throws a `ValidationError` with the message defined in the schema, which can be caught and returned as a 400 response.
+
+---
+
+---
+
+# 🌐 SECTION 6: REST API DESIGN
+
+---
+
+**Q19. What does RESTful mean and how does your API follow REST principles?**
+
+**Answer:**
+REST (Representational State Transfer) is an architectural style for APIs based on HTTP. Key principles I followed:
+
+| Principle | Implementation |
+|-----------|---------------|
+| **Stateless** | No server session; every request carries JWT token |
+| **Resource-based URLs** | `/api/leaves`, `/api/users`, `/api/reimbursements` |
+| **HTTP verbs for intent** | GET=read, POST=create, PUT=update, DELETE=delete |
+| **Standard status codes** | 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Server Error |
+| **JSON request/response** | All data exchanged as JSON |
+
+---
+
+**Q20. Why did you use `express-async-handler`?**
+
+**Answer:**
+In Express, async errors inside route handlers are not automatically caught. Without `express-async-handler`, you'd need to wrap every controller function in `try/catch`. `express-async-handler` wraps the function and automatically passes any thrown error to Express's `next(err)` error-handling middleware.
+
+**Why used:** Cleaner controllers without repetitive try/catch blocks. The central error handler in [server.js](file:///e:/Employee-Leave/server.js) then handles all errors uniformly.
+
+---
+
+**Q21. Explain your central error handler in [server.js](file:///e:/Employee-Leave/server.js).**
+
+**Answer:**
+```js
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Internal Server Error',
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    });
+});
+```
+
+**Why:** Instead of handling errors individually in each controller, a single 4-argument middleware at the end of the middleware chain catches all errors. In development, the stack trace is included for debugging; in production, it's hidden for security.
+
+---
+
+**Q22. Why does [deleteLeave](file:///e:/Employee-Leave/controllers/leaveController.js#77-99) check ownership AND status?**
+
+**Answer:**
+```js
+if (leave.user.toString() !== req.user._id.toString()) → 403
+if (leave.status !== 'Pending') → 400
+```
+
+**Two separate business rules:**
+1. **Ownership check:** An employee should never be able to delete another employee's leave
+2. **Status check:** Once a manager has reviewed (Approved/Rejected) a leave, it becomes a record of HR history. Allowing deletion would break the audit trail
+
+**Why `.toString()`:** MongoDB ObjectIds are objects, not strings. Comparing them with `===` compares object references, which always fails. `.toString()` converts both to string form for actual value comparison.
+
+---
+
+---
+
+# ⚛️ SECTION 7: REACT & FRONTEND
+
+---
+
+**Q23. Why did you use Vite instead of Create React App (CRA)?**
+
+**Answer:**
+- **Speed:** Vite uses native ES Modules during development, serving files directly to the browser without bundling. CRA uses Webpack which bundles everything — this makes CRA startup and HMR (Hot Module Replacement) significantly slower
+- **Modern:** Vite is the current industry standard. CRA is deprecated and unmaintained
+- **Build:** Vite uses Rollup for production builds, producing highly optimized output
+
+**What happens when `npm run dev` runs:** Vite starts a dev server, transforms only the files that change (not the whole bundle), and serves them via native ESM — making development very fast.
+
+---
+
+**Q24. Explain your `AuthContext` and why you used React Context.**
+
+**Answer:**
+`AuthContext` stores the logged-in user object and token globally. It's created with React's `createContext()` and provided at the app root via `AuthProvider`. Any component can access `user`, `token`, [login()](file:///e:/Employee-Leave/controllers/authController.js#64-97), and `logout()` functions via the `useContext(AuthContext)` hook.
+
+**Why Context over prop drilling:** The authenticated user's data is needed in many components across different nesting levels (Sidebar, Dashboard, ProtectedRoute, API calls). Passing it as props through every component would be messy. Context provides a clean "global store" without a third-party library.
+
+**What happens when logout is called:** The context clears `user` and `token`, removes from localStorage, and redirects to `/login`. All protected routes then redirect to login automatically.
+
+---
+
+**Q25. What is your `ProtectedRoute` component and how does it work?**
+
+**Answer:**
+```jsx
+// Usage in App.jsx:
+<Route path="/employee" element={
+    <ProtectedRoute roles={['employee']}>
+        <EmployeeDashboard />
+    </ProtectedRoute>
+} />
+```
+
+`ProtectedRoute` is a wrapper component that:
+1. Reads `user` from `AuthContext`
+2. If no user → redirects to `/login`
+3. If user role not in allowed `roles` array → redirects to their correct dashboard
+4. Otherwise → renders children
+
+**Why:** Prevents unauthorized page access on the frontend. A manager typing `/admin` in the URL bar should not see the admin panel. This check happens before the component even renders.
+
+---
+
+**Q26. How does React Router v7 work in your app?**
+
+**Answer:**
+React Router provides client-side routing — navigating between pages without a full page reload. In [App.jsx](file:///e:/Employee-Leave/client/src/App.jsx):
+- `BrowserRouter` wraps the app to enable routing
+- `Routes` + `Route` components map URL paths to React components
+- `Navigate` provides programmatic redirects (e.g., `path="*"` unknown routes → `/login`)
+- `useNavigate()` hook used in components for navigation after actions
+
+**Why:** A Single Page Application (SPA) like React should handle navigation on the client side for a fast, app-like experience. Every route change doesn't fetch a new HTML page from the server.
+
+---
+
+**Q27. How did you make API calls from the frontend?**
+
+**Answer:**
+I created an Axios instance (in `src/api/`) pre-configured with:
+- `baseURL`: Points to the backend Render URL (configurable via environment variable)
+- `Authorization` header: Automatically attaches `Bearer <token>` from localStorage to every request
+
+**Why Axios over `fetch`:** Axios provides automatic JSON parsing, better error handling (catches non-2xx status codes automatically), request/response interceptors, and cleaner syntax.
+
+---
+
+**Q28. What is `react-hot-toast` and why did you use it?**
+
+**Answer:**
+`react-hot-toast` is a lightweight library for showing toast (pop-up) notifications. Used for success/error feedback after actions like applying leave, logging in, or approving a request.
+
+**Why:** Rather than building custom alert/modal components, react-hot-toast provides accessible, animated, stackable notifications in 2 lines of code. It's positioned at the top-right via `<Toaster position="top-right" />` in App.jsx.
+
+---
+
+**Q29. Explain `ThemeContext` and the dark/light mode implementation.**
+
+**Answer:**
+`ThemeContext` stores a `theme` state (`'dark'` or `'light'`). A `toggleTheme()` function switches between them and persists the choice in `localStorage`. The selected theme class is applied to the root HTML element, and Tailwind's `dark:` variants handle the visual difference.
+
+**Why:** Users have preferences for dark or light mode. Persisting to localStorage means the choice survives page refresh.
+
+---
+
+---
+
+# 📁 SECTION 8: FILE UPLOADS
+
+---
+
+**Q30. How did you handle file uploads for reimbursement receipts?**
+
+**Answer:**
+**Multer** (backend middleware) parses multipart/form-data requests and makes the uploaded file available at `req.file`. On the reimbursement route, Multer processes the file before the controller runs. The controller then stores either the local file path or a Cloudinary URL in the `receipt` field of the Reimbursement document.
+
+**With Cloudinary integration:** Instead of storing files on the server's disk (which is wiped on Render's free tier restart), files are uploaded to Cloudinary, and the returned secure URL is stored in MongoDB.
+
+**Why Cloudinary:** Persistent, cloud-hosted file storage with CDN delivery. Server disk storage is ephemeral in cloud environments.
+
+---
+
+**Q31. What is multipart/form-data and why is it needed for file uploads?**
+
+**Answer:**
+When sending a file via HTTP, you cannot send binary file data in a regular JSON body. `multipart/form-data` is a content type that encodes form fields and binary file data together in a single request, with each part separated by a boundary.
+
+**What happens:** Multer reads the boundary, splits the body into parts, extracts the file, saves it, and attaches metadata to `req.file`. Text fields go to `req.body`. Without Multer, Express's `express.json()` parser cannot handle this content type.
+
+---
+
+---
+
+# 🌍 SECTION 9: CORS
+
+---
+
+**Q32. What is CORS and why is it important in your project?**
+
+**Answer:**
+**CORS (Cross-Origin Resource Sharing)** is a browser security mechanism that blocks web pages from making requests to a different origin (domain/port) than the one that served the page.
+
+**In this project:** The frontend is hosted on `https://leavloop.vercel.app` and the backend on `https://your-api.render.com` — different origins. The browser will block API calls unless the backend explicitly allows the frontend's origin.
+
+**How fixed:**
+```js
+app.use(cors({
+    origin: (origin, callback) => {
+        const allowed = ['http://localhost:5173', 'http://localhost:5174'];
+        if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+            callback(null, true); // Allow
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+}));
+```
+
+The regex `/\.vercel\.app$/` allows any Vercel preview deployment URL automatically, not just a hardcoded one.
+
+---
+
+**Q33. What does `credentials: true` do in CORS config?**
+
+**Answer:**
+It allows the browser to send cookies and HTTP authentication headers (like `Authorization: Bearer`) with cross-origin requests. Without it, even if the origin is allowed, the browser strips credentials from cross-origin requests.
+
+**What happens without it:** The `Authorization` header with the JWT token would not reach the backend, causing 401 errors on every protected route.
+
+---
+
+---
+
+# 🚀 SECTION 10: DEPLOYMENT
+
+---
+
+**Q34. How did you deploy this project?**
+
+**Answer:**
+- **Backend:** Deployed on **Render** (free tier). [render.yaml](file:///e:/Employee-Leave/render.yaml) configures the service — `npm start` runs `node server.js`. Environment variables (MONGO_URI, JWT_SECRET, etc.) are set in Render's dashboard.
+- **Frontend:** Deployed on **Vercel** (free tier). [vercel.json](file:///e:/Employee-Leave/client/vercel.json) configures SPA routing — rewrites all routes to [index.html](file:///e:/Employee-Leave/client/index.html) so React Router handles navigation correctly.
+
+**Why these platforms:**
+- Render: Supports Node.js backends natively with automatic deploys from GitHub
+- Vercel: Optimized for frontend frameworks like React/Vite with zero-config deploys
+
+---
+
+**Q35. What does [vercel.json](file:///e:/Employee-Leave/client/vercel.json) solve?**
+
+**Answer:**
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
+
+In a React SPA, routing is handled by JavaScript on the client. If a user directly visits `https://app.vercel.app/employee/apply-leave`, Vercel's server tries to find a file at that path — which doesn't exist. Without this config, the server returns a 404. The rewrite rule sends all requests to [index.html](file:///e:/Employee-Leave/client/index.html), letting React Router take over.
+
+---
+
+**Q36. What are environment variables and why are they in [.env](file:///e:/Employee-Leave/.env)?**
+
+**Answer:**
+Environment variables store sensitive configuration (database URL, JWT secret, API keys) outside the code. They are read via `process.env.VARIABLE_NAME` using the `dotenv` package.
+
+**Why [.env](file:///e:/Employee-Leave/.env) is in [.gitignore](file:///e:/Employee-Leave/.gitignore):** If secrets are committed to GitHub, they become publicly accessible. This is a major security risk. [.env](file:///e:/Employee-Leave/.env) stays on the developer's machine; on Render/Vercel, variables are configured through the dashboard.
+
+---
+
+---
+
+# 💡 SECTION 11: SCENARIO-BASED QUESTIONS
+
+---
+
+**Q37. What happens when a JWT token expires?**
+
+**Answer:**
+The `jwt.verify()` call in [authMiddleware.js](file:///e:/Employee-Leave/middleware/authMiddleware.js) throws a `TokenExpiredError`. The catch block returns `401 Unauthorized` with the message "Token invalid or expired". On the frontend, the Axios error handler should detect 401 responses and trigger logout (clear context + redirect to login).
+
+---
+
+**Q38. An employee deletes a pending leave. What happens step by step?**
+
+**Answer:**
+1. Frontend sends `DELETE /api/leaves/:id` with `Authorization: Bearer <token>`
+2. [protect](file:///e:/Employee-Leave/middleware/authMiddleware.js#4-35) middleware verifies token, attaches user to `req.user`
+3. [deleteLeave](file:///e:/Employee-Leave/controllers/leaveController.js#77-99) controller runs:
+   - Finds leave by `req.params.id`
+   - Checks `leave.user.toString() === req.user._id.toString()` (ownership)
+   - Checks `leave.status === 'Pending'` (can't delete reviewed leaves)
+   - Calls `leave.deleteOne()` to remove from MongoDB
+4. Returns `200 { success: true, message: 'Leave deleted' }`
+5. Frontend removes the leave from UI and shows a toast notification
+
+---
+
+**Q39. What happens when a manager approves a leave?**
+
+**Answer:**
+1. Manager clicks "Approve" → Frontend sends `PUT /api/leaves/:id/status` with `{ status: 'Approved', reviewNote: '...' }`
+2. [protect](file:///e:/Employee-Leave/middleware/authMiddleware.js#4-35) + [authorize('manager', 'admin')](file:///e:/Employee-Leave/middleware/roleMiddleware.js#1-16) middleware run (double-checked)
+3. [updateLeaveStatus](file:///e:/Employee-Leave/controllers/leaveController.js#53-76) controller:
+   - Finds the leave
+   - Sets `leave.status = 'Approved'`
+   - Sets `leave.reviewedBy = req.user._id` (tracks who approved)
+   - Sets `leave.reviewNote`
+   - Saves to MongoDB (triggers `updatedAt` timestamp)
+4. Returns updated leave object
+5. Manager's UI refreshes the list; employee's leave history page shows "Approved"
+
+---
+
+**Q40. How would you improve this project if you had more time?**
+
+**Answer:**
+1. **Email notifications:** Send email to employee when leave is approved/rejected (using Nodemailer or SendGrid)
+2. **Leave balance tracking:** Add a leave balance field to User model, decrement on approval
+3. **Pagination:** Currently all leaves are fetched at once. For large organizations, cursor-based or offset pagination is needed
+4. **Refresh tokens:** Currently JWT expires and user is logged out. Implement refresh token rotation
+5. **Unit/Integration tests:** Add Jest tests for controllers and Mongoose models
+6. **Real-time updates:** Use Socket.io so managers see new leave requests without refreshing
+7. **Report generation:** Export leave/reimbursement data as CSV or PDF
+
+---
+
+**Q41. How is your project different from a basic CRUD app?**
+
+**Answer:**
+- **Role-based access:** Not just CRUD — different users can do different things. An employee can't approve their own leave
+- **Security layers:** JWT auth + RBAC middleware + `select: false` on password + environment variables
+- **Real-world business rules:** Can't delete a reviewed leave, ownership checks, status workflow (Pending → Approved/Rejected)
+- **Full deployment:** Live on Render + Vercel with CORS configured for separate-domain deployment
+- **Production patterns:** Central error handler, async error handling, [.env](file:///e:/Employee-Leave/.env) config, health check endpoint
+
+---
+
+---
+
+# 🔑 KEY TERMS CHEAT SHEET
+
+| Term | One-line definition |
+|------|-------------------|
+| **JWT** | Self-contained signed token for stateless auth |
+| **bcrypt** | Slow hashing algorithm designed for passwords |
+| **CORS** | Browser policy blocking cross-origin requests without server permission |
+| **RBAC** | Restricting access based on the user's assigned role |
+| **Middleware** | Function that runs between request and response in Express |
+| **Mongoose populate** | Replaces ObjectId reference with the actual document (like SQL JOIN) |
+| **Multer** | Express middleware for handling file uploads |
+| **Context API** | React's built-in global state solution |
+| **Protected Route** | React component that blocks unauthorized access to pages |
+| **Vite** | Fast frontend build tool using native ESM |
+| **REST** | Stateless, resource-based HTTP API architecture |
+| **SPA** | Single Page Application — one HTML file, JS handles routing |
+
+---
+
+> 💪 **Practice Tip:** Be ready to draw the request-response flow on a whiteboard: `Browser → Axios → Express → protect middleware → authorize middleware → Controller → Mongoose → MongoDB → JSON response → React state update → UI`

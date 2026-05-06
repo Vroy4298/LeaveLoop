@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import StatusBadge from '../../components/common/StatusBadge';
 import API from '../../api/axios';
-import { CalendarDays, Receipt, Clock, CheckCircle } from 'lucide-react';
+import { CalendarDays, Receipt, Clock, CheckCircle, Umbrella } from 'lucide-react';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className="card flex items-center gap-4">
@@ -16,20 +16,42 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
     </div>
 );
 
+const BalanceBar = ({ label, used, total, color }) => {
+    const remaining = Math.max(0, total - used);
+    const pct = total > 0 ? (remaining / total) * 100 : 0;
+    return (
+        <div>
+            <div className="flex justify-between text-xs mb-1">
+                <span className="font-medium text-slate-600 dark:text-slate-300">{label}</span>
+                <span className="text-slate-400">{remaining} / {total} days left</span>
+            </div>
+            <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                    className={`h-full rounded-full transition-all duration-700 ${color}`}
+                    style={{ width: `${pct}%` }}
+                />
+            </div>
+        </div>
+    );
+};
+
 const EmployeeDashboard = () => {
     const [leaves, setLeaves] = useState([]);
     const [reimbursements, setReimbursements] = useState([]);
+    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [lRes, rRes] = await Promise.all([
+                const [lRes, rRes, pRes] = await Promise.all([
                     API.get('/leaves/my'),
                     API.get('/reimbursements/my'),
+                    API.get('/auth/me'),
                 ]);
                 setLeaves(lRes.data.leaves);
                 setReimbursements(rRes.data.reimbursements);
+                setProfile(pRes.data.user);
             } finally {
                 setLoading(false);
             }
@@ -38,6 +60,16 @@ const EmployeeDashboard = () => {
     }, []);
 
     const count = (arr, status) => arr.filter(i => i.status === status).length;
+
+    // Calculate used days per type from approved leaves
+    const usedDays = (type) => leaves
+        .filter(l => l.leaveType === type && l.status === 'Approved')
+        .reduce((sum, l) => {
+            const d = Math.ceil((new Date(l.toDate) - new Date(l.fromDate)) / (1000 * 60 * 60 * 24)) + 1;
+            return sum + d;
+        }, 0);
+
+    const balance = profile?.leaveBalance || { Annual: 15, Sick: 10, Casual: 7 };
 
     return (
         <DashboardLayout title="Dashboard">
@@ -53,6 +85,39 @@ const EmployeeDashboard = () => {
                         <StatCard title="Pending Leaves" value={count(leaves, 'Pending')} icon={Clock} color="bg-amber-500" />
                         <StatCard title="Approved Leaves" value={count(leaves, 'Approved')} icon={CheckCircle} color="bg-emerald-500" />
                         <StatCard title="Total Reimbursements" value={reimbursements.length} icon={Receipt} color="bg-violet-500" />
+                    </div>
+
+                    {/* Leave Balance Widget */}
+                    <div className="card">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/30 rounded-xl flex items-center justify-center">
+                                <Umbrella size={20} className="text-sky-600 dark:text-sky-400" />
+                            </div>
+                            <div>
+                                <h2 className="section-title">Leave Balance</h2>
+                                <p className="text-xs text-slate-400">Annual quota remaining for this year</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <BalanceBar
+                                label="Annual Leave"
+                                used={usedDays('Annual')}
+                                total={balance.Annual ?? 15}
+                                color="bg-blue-500"
+                            />
+                            <BalanceBar
+                                label="Sick Leave"
+                                used={usedDays('Sick')}
+                                total={balance.Sick ?? 10}
+                                color="bg-rose-500"
+                            />
+                            <BalanceBar
+                                label="Casual Leave"
+                                used={usedDays('Casual')}
+                                total={balance.Casual ?? 7}
+                                color="bg-amber-500"
+                            />
+                        </div>
                     </div>
 
                     {/* Recent Leaves */}

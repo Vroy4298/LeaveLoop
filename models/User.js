@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        leaveBalance: {
+            Annual: { type: Number, default: 15 },
+            Sick:   { type: Number, default: 10 },
+            Casual: { type: Number, default: 7 },
+        },
     },
     { timestamps: true }
 );

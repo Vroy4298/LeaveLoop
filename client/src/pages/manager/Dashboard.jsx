@@ -68,7 +68,7 @@ const ManagerDashboard = () => {
                                     </thead>
                                     <tbody>
                                         {leaves.filter(l => l.status === 'Pending').slice(0, 6).map(l => (
-                                            <tr key={l._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <tr key={l._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                                 <td className="py-3 px-3">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold text-xs">
@@ -106,7 +106,7 @@ const ManagerDashboard = () => {
                                     </thead>
                                     <tbody>
                                         {reimbursements.filter(r => r.status === 'Pending').slice(0, 6).map(r => (
-                                            <tr key={r._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <tr key={r._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                                 <td className="py-3 px-3 font-medium text-slate-700">{r.user?.name}</td>
                                                 <td className="py-3 px-3 text-slate-500">{r.title}</td>
                                                 <td className="py-3 px-3 font-semibold text-slate-700">₹{r.amount.toLocaleString()}</td>

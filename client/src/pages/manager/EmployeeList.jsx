@@ -51,30 +51,30 @@ const EmployeeList = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-slate-100">
+                                <tr className="border-b border-slate-100 dark:border-slate-700">
                                     {['Employee', 'Email', 'Department', 'Designation', 'Role', 'Joined'].map(h => (
-                                        <th key={h} className="text-left py-3 px-3 text-slate-500 font-medium">{h}</th>
+                                        <th key={h} className="text-left py-3 px-3 text-slate-500 dark:text-slate-400 font-medium">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {filtered.map(u => (
-                                    <tr key={u._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <tr key={u._id} className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                         <td className="py-3 px-3">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center flex-shrink-0">
                                                     <span className="text-white text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>
                                                 </div>
-                                                <span className="font-medium text-slate-800">{u.name}</span>
+                                                <span className="font-medium text-slate-800 dark:text-slate-100">{u.name}</span>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-3 text-slate-500">{u.email}</td>
-                                        <td className="py-3 px-3 text-slate-500">{u.department || '—'}</td>
-                                        <td className="py-3 px-3 text-slate-500">{u.designation || '—'}</td>
+                                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400">{u.email}</td>
+                                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400">{u.department || '—'}</td>
+                                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400">{u.designation || '—'}</td>
                                         <td className="py-3 px-3">
                                             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${roleColor[u.role]}`}>{u.role}</span>
                                         </td>
-                                        <td className="py-3 px-3 text-slate-400 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                                        <td className="py-3 px-3 text-slate-400 dark:text-slate-500 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
                                     </tr>
                                 ))}
                             </tbody>

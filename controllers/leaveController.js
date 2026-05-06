@@ -1,4 +1,6 @@
 const Leave = require('../models/Leave');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // @desc    Apply for leave (Employee)
 // @route   POST /api/leaves
@@ -6,15 +8,33 @@ const Leave = require('../models/Leave');
 const applyLeave = async (req, res) => {
     const { leaveType, fromDate, toDate, reason } = req.body;
 
-    const leave = await Leave.create({
-        user: req.user._id,
-        leaveType,
-        fromDate,
-        toDate,
-        reason,
-    });
+    try {
+        // Date conflict detection
+        const conflict = await Leave.findOne({
+            user: req.user._id,
+            status: { $in: ['Pending', 'Approved'] },
+            fromDate: { $lte: new Date(toDate) },
+            toDate:   { $gte: new Date(fromDate) },
+        });
+        if (conflict) {
+            return res.status(400).json({
+                success: false,
+                message: 'You already have a leave request for overlapping dates.',
+            });
+        }
 
-    res.status(201).json({ success: true, leave });
+        const leave = await Leave.create({
+            user: req.user._id,
+            leaveType,
+            fromDate,
+            toDate,
+            reason,
+        });
+
+        res.status(201).json({ success: true, leave });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
+    }
 };
 
 // @desc    Get my leaves (Employee)
@@ -47,6 +67,12 @@ const getLeaveById = async (req, res) => {
     if (!leave) {
         return res.status(404).json({ success: false, message: 'Leave not found' });
     }
+
+    // Ownership check: employees can only view their own leave records
+    if (req.user.role === 'employee' && leave.user._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'Not authorized to view this leave' });
+    }
+
     res.json({ success: true, leave });
 };
 
@@ -56,22 +82,54 @@ const getLeaveById = async (req, res) => {
 const updateLeaveStatus = async (req, res) => {
     const { status, reviewNote, rejectionReason } = req.body;
 
-    const leave = await Leave.findById(req.params.id);
+    try {
+        const leave = await Leave.findById(req.params.id);
 
-    if (!leave) {
-        return res.status(404).json({ success: false, message: 'Leave not found' });
+        if (!leave) {
+            return res.status(404).json({ success: false, message: 'Leave not found' });
+        }
+
+        leave.status = status;
+        leave.reviewedBy = req.user._id;
+        leave.reviewNote = reviewNote || '';
+        if (status === 'Rejected') {
+            leave.rejectionReason = rejectionReason || '';
+        }
+
+        await leave.save();
+
+        // Deduct leave balance on approval
+        if (status === 'Approved') {
+            const days = Math.ceil(
+                (new Date(leave.toDate) - new Date(leave.fromDate)) / (1000 * 60 * 60 * 24)
+            ) + 1;
+            const balanceKey = `leaveBalance.${leave.leaveType}`;
+            await User.findByIdAndUpdate(leave.user, {
+                $inc: { [balanceKey]: -days },
+            });
+        }
+
+        // Create in-app notification for the employee
+        const days = Math.ceil(
+            (new Date(leave.toDate) - new Date(leave.fromDate)) / (1000 * 60 * 60 * 24)
+        ) + 1;
+        const emoji    = status === 'Approved' ? '✅' : '❌';
+        const notifMsg = status === 'Approved'
+            ? `${emoji} Your ${leave.leaveType} leave (${days} day${days > 1 ? 's' : ''}) has been Approved.`
+            : `${emoji} Your ${leave.leaveType} leave request was Rejected.${
+                rejectionReason ? ` Reason: ${rejectionReason}` : ''
+              }`;
+
+        await Notification.create({
+            user: leave.user,
+            message: notifMsg,
+            type: status === 'Approved' ? 'success' : 'warning',
+        });
+
+        res.json({ success: true, leave });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message || 'Server error' });
     }
-
-    leave.status = status;
-    leave.reviewedBy = req.user._id;
-    leave.reviewNote = reviewNote || '';
-    if (status === 'Rejected') {
-        leave.rejectionReason = rejectionReason || '';
-    }
-
-    await leave.save();
-
-    res.json({ success: true, leave });
 };
 
 // @desc    Delete leave (Employee - only if pending)
